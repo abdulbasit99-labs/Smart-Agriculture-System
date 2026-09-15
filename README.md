@@ -1,5 +1,5 @@
 # Smart-Agriculture-System
-# IoT-Based Smart Plant Health & Soil Monitoring System 🌱
+# IoT-Based Smart Plant Health & Soil Monitoring System
 
 An ESP32-based IoT system for real-time monitoring of plant growing
 conditions and automatic irrigation.
