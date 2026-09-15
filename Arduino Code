@@ -1,0 +1,373 @@
+#include <WiFi.h>
+#include <Wire.h>
+#include <DHT.h>
+#include <BH1750.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+
+// =========================
+// WiFi Configuration
+// =========================
+
+const char* WIFI_SSID = "YOUR_WIFI_NAME";
+const char* WIFI_PASSWORD = "YOUR_WIFI_PASSWORD";
+
+// =========================
+// Pin Configuration
+// =========================
+
+#define SOIL_PIN 34
+#define DHT_PIN 4
+#define DHT_TYPE DHT22
+
+#define RELAY_PIN 26
+
+#define RED_PIN 25
+#define GREEN_PIN 27
+#define BLUE_PIN 14
+
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 64
+
+// =========================
+// Objects
+// =========================
+
+DHT dht(DHT_PIN, DHT_TYPE);
+BH1750 lightMeter;
+
+Adafruit_SSD1306 display(
+  SCREEN_WIDTH,
+  SCREEN_HEIGHT,
+  &Wire,
+  -1
+);
+
+// =========================
+// Settings
+// =========================
+
+int soilDryValue = 3000;
+int soilWetValue = 1200;
+
+int irrigationThreshold = 35;
+
+// =========================
+// Variables
+// =========================
+
+float temperature = 0;
+float humidity = 0;
+float lux = 0;
+
+int soilPercentage = 0;
+int healthScore = 0;
+
+bool pumpState = false;
+
+// =========================
+// RGB Functions
+// =========================
+
+void setRGB(bool red, bool green, bool blue)
+{
+  digitalWrite(RED_PIN, red);
+  digitalWrite(GREEN_PIN, green);
+  digitalWrite(BLUE_PIN, blue);
+}
+
+// =========================
+// Soil Moisture
+// =========================
+
+int readSoilMoisture()
+{
+  int rawValue = analogRead(SOIL_PIN);
+
+  int percentage = map(
+    rawValue,
+    soilDryValue,
+    soilWetValue,
+    0,
+    100
+  );
+
+  percentage = constrain(
+    percentage,
+    0,
+    100
+  );
+
+  return percentage;
+}
+
+// =========================
+// Plant Health Score
+// =========================
+
+int calculateHealthScore()
+{
+  int score = 0;
+
+  // Soil moisture
+  if (soilPercentage >= 40 && soilPercentage <= 75)
+  {
+    score += 40;
+  }
+  else if (soilPercentage >= 25)
+  {
+    score += 25;
+  }
+
+  // Temperature
+  if (temperature >= 18 && temperature <= 30)
+  {
+    score += 25;
+  }
+  else if (temperature >= 12 && temperature <= 35)
+  {
+    score += 15;
+  }
+
+  // Humidity
+  if (humidity >= 40 && humidity <= 80)
+  {
+    score += 20;
+  }
+  else if (humidity >= 30 && humidity <= 90)
+  {
+    score += 10;
+  }
+
+  // Light
+  if (lux >= 1000 && lux <= 30000)
+  {
+    score += 15;
+  }
+  else if (lux >= 300)
+  {
+    score += 8;
+  }
+
+  return constrain(score, 0, 100);
+}
+
+// =========================
+// Irrigation Control
+// =========================
+
+void controlPump()
+{
+  if (soilPercentage < irrigationThreshold)
+  {
+    digitalWrite(RELAY_PIN, HIGH);
+    pumpState = true;
+  }
+  else
+  {
+    digitalWrite(RELAY_PIN, LOW);
+    pumpState = false;
+  }
+}
+
+// =========================
+// Display
+// =========================
+
+void updateDisplay()
+{
+  display.clearDisplay();
+
+  display.setTextSize(1);
+  display.setTextColor(SSD1306_WHITE);
+
+  display.setCursor(0, 0);
+  display.print("Smart Plant Monitor");
+
+  display.setCursor(0, 12);
+  display.print("Soil: ");
+  display.print(soilPercentage);
+  display.println("%");
+
+  display.setCursor(0, 23);
+  display.print("Temp: ");
+  display.print(temperature, 1);
+  display.println(" C");
+
+  display.setCursor(0, 34);
+  display.print("Hum: ");
+  display.print(humidity, 1);
+  display.println("%");
+
+  display.setCursor(0, 45);
+  display.print("Light: ");
+  display.print(lux, 0);
+  display.println(" lx");
+
+  display.setCursor(0, 56);
+  display.print("Health: ");
+  display.print(healthScore);
+  display.print("%");
+
+  display.display();
+}
+
+// =========================
+// Setup
+// =========================
+
+void setup()
+{
+  Serial.begin(115200);
+
+  pinMode(RELAY_PIN, OUTPUT);
+
+  pinMode(RED_PIN, OUTPUT);
+  pinMode(GREEN_PIN, OUTPUT);
+  pinMode(BLUE_PIN, OUTPUT);
+
+  digitalWrite(RELAY_PIN, LOW);
+
+  setRGB(false, false, false);
+
+  // I2C
+  Wire.begin(21, 22);
+
+  // DHT
+  dht.begin();
+
+  // OLED
+  if (!display.begin(
+        SSD1306_SWITCHCAPVCC,
+        0x3C))
+  {
+    Serial.println("OLED not found!");
+  }
+
+  // BH1750
+  if (lightMeter.begin())
+  {
+    Serial.println("BH1750 initialized.");
+  }
+  else
+  {
+    Serial.println("BH1750 not found!");
+  }
+
+  // WiFi
+  WiFi.begin(
+    WIFI_SSID,
+    WIFI_PASSWORD
+  );
+
+  Serial.print("Connecting to WiFi");
+
+  while (WiFi.status() != WL_CONNECTED)
+  {
+    delay(500);
+    Serial.print(".");
+  }
+
+  Serial.println();
+  Serial.println("WiFi connected!");
+
+  Serial.print("IP Address: ");
+  Serial.println(WiFi.localIP());
+}
+
+// =========================
+// Main Loop
+// =========================
+
+void loop()
+{
+  // Read sensors
+
+  soilPercentage =
+    readSoilMoisture();
+
+  temperature =
+    dht.readTemperature();
+
+  humidity =
+    dht.readHumidity();
+
+  lux =
+    lightMeter.readLightLevel();
+
+  // Check DHT readings
+
+  if (isnan(temperature) ||
+      isnan(humidity))
+  {
+    Serial.println(
+      "DHT sensor error!"
+    );
+
+    return;
+  }
+
+  // Calculate plant health
+
+  healthScore =
+    calculateHealthScore();
+
+  // Automatic irrigation
+
+  controlPump();
+
+  // RGB status
+
+  if (healthScore >= 70)
+  {
+    // Healthy
+    setRGB(false, true, false);
+  }
+  else if (soilPercentage < irrigationThreshold)
+  {
+    // Low soil moisture
+    setRGB(false, false, true);
+  }
+  else
+  {
+    // Unfavorable condition
+    setRGB(true, false, false);
+  }
+
+  // Serial monitor
+
+  Serial.println(
+    "----------------------------"
+  );
+
+  Serial.print("Soil Moisture: ");
+  Serial.print(soilPercentage);
+  Serial.println("%");
+
+  Serial.print("Temperature: ");
+  Serial.print(temperature);
+  Serial.println(" C");
+
+  Serial.print("Humidity: ");
+  Serial.print(humidity);
+  Serial.println("%");
+
+  Serial.print("Light: ");
+  Serial.print(lux);
+  Serial.println(" lux");
+
+  Serial.print("Plant Health: ");
+  Serial.print(healthScore);
+  Serial.println("%");
+
+  Serial.print("Pump: ");
+
+  if (pumpState)
+    Serial.println("ON");
+  else
+    Serial.println("OFF");
+
+  updateDisplay();
+
+  delay(5000);
+}
