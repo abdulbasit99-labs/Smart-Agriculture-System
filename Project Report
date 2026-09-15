@@ -1,0 +1,231 @@
+# PROJECT REPORT
+
+# IoT-Based Smart Plant Health & Soil Monitoring System
+
+## 1. Abstract
+
+Agriculture and plant cultivation require continuous monitoring of
+soil and environmental conditions. Conventional irrigation methods
+often depend on manual observation and can result in overwatering or
+underwatering.
+
+This project presents an IoT-Based Smart Plant Health and Soil
+Monitoring System using an ESP32 microcontroller. The system measures
+soil moisture, temperature, humidity, and light intensity using
+multiple sensors.
+
+The collected data is processed by the ESP32 to determine an
+environmental Plant Health Index. When soil moisture falls below a
+predefined threshold, the system automatically activates a water pump
+through a relay.
+
+An OLED display provides local real-time information while Wi-Fi
+connectivity provides an IoT-ready platform for remote monitoring.
+
+---
+
+# 2. Introduction
+
+Modern agriculture increasingly uses IoT technologies to improve
+resource efficiency and crop management.
+
+Plants require suitable soil moisture, temperature, humidity, and
+light conditions for healthy growth. Monitoring these parameters
+manually is time-consuming and may result in delayed irrigation.
+
+The proposed system automates environmental monitoring and irrigation
+using an ESP32.
+
+---
+
+# 3. Problem Statement
+
+Traditional plant irrigation has several limitations:
+
+- Manual monitoring is required.
+- Water may be wasted.
+- Soil moisture may not be checked regularly.
+- Environmental conditions are difficult to monitor continuously.
+- Farmers and gardeners may not have real-time information.
+
+The proposed system addresses these problems using sensors,
+microcontroller-based processing, automatic irrigation, and IoT
+connectivity.
+
+---
+
+# 4. Objectives
+
+The main objectives are:
+
+1. Monitor soil moisture in real time.
+2. Measure temperature and humidity.
+3. Measure light intensity.
+4. Display sensor readings locally.
+5. Calculate an environmental Plant Health Index.
+6. Automatically control irrigation.
+7. Reduce unnecessary water usage.
+8. Provide an IoT-ready monitoring system.
+
+---
+
+# 5. Proposed System
+
+The system consists of four major sections:
+
+## 5.1 Sensing Unit
+
+The sensing unit consists of:
+
+- Soil moisture sensor
+- DHT22 temperature/humidity sensor
+- BH1750 light sensor
+
+These sensors collect information about the plant environment.
+
+## 5.2 Control Unit
+
+An ESP32 Development Board is used as the main controller.
+
+It receives sensor data, processes it, calculates the Plant Health
+Index, and controls the irrigation system.
+
+## 5.3 Output Unit
+
+The output section contains:
+
+- OLED display
+- RGB LED
+- Relay
+- Water pump
+
+## 5.4 IoT Unit
+
+The ESP32 connects to a Wi-Fi network and can transmit sensor data
+to an IoT dashboard or cloud platform.
+
+---
+
+# 6. Hardware Components
+
+## ESP32
+
+The ESP32 is used because it provides:
+
+- Wi-Fi
+- Bluetooth
+- Multiple GPIO pins
+- ADC inputs
+- I2C communication
+- Sufficient processing capability
+
+## Soil Moisture Sensor
+
+The sensor measures the moisture condition of the soil.
+
+Its analog output is connected to an ESP32 ADC pin.
+
+## DHT22
+
+The DHT22 measures:
+
+- Temperature
+- Relative humidity
+
+## BH1750
+
+The BH1750 measures ambient light intensity in lux.
+
+## OLED Display
+
+The OLED displays live sensor readings and the Plant Health Index.
+
+## Relay
+
+The relay acts as an interface between the ESP32 and the external
+water pump.
+
+## Water Pump
+
+The pump supplies water to the plant when the soil becomes too dry.
+
+---
+
+# 7. Software Requirements
+
+- Arduino IDE
+- ESP32 Board Package
+- DHT Library
+- BH1750 Library
+- Adafruit GFX Library
+- Adafruit SSD1306 Library
+
+---
+
+# 8. System Working
+
+The system operates as follows:
+
+1. The ESP32 starts.
+2. Sensors are initialized.
+3. The ESP32 connects to Wi-Fi.
+4. Soil moisture is measured.
+5. Temperature and humidity are measured.
+6. Light intensity is measured.
+7. Sensor values are processed.
+8. The Plant Health Index is calculated.
+9. Values are displayed on the OLED.
+10. The RGB LED indicates system status.
+11. If soil moisture is below the threshold, the relay activates.
+12. The water pump starts.
+13. Once adequate moisture is restored, the pump stops.
+14. Sensor data can be transmitted through Wi-Fi.
+
+---
+
+# 9. Plant Health Index
+
+The project uses an experimental environmental suitability score.
+
+The score is calculated using four parameters:
+
+- Soil moisture
+- Temperature
+- Humidity
+- Light
+
+The maximum score is 100.
+
+Example weighting:
+
+| Parameter | Weight |
+|---|---:|
+| Soil Moisture | 40% |
+| Temperature | 25% |
+| Humidity | 20% |
+| Light | 15% |
+
+The target ranges should be adjusted according to the plant species.
+
+---
+
+# 10. Automatic Irrigation
+
+The irrigation system uses a predefined soil moisture threshold.
+
+Example:
+
+```text
+Soil moisture < 35%
+        ↓
+Relay ON
+        ↓
+Water Pump ON
+        ↓
+Soil moisture increases
+        ↓
+Soil moisture ≥ 35%
+        ↓
+Relay OFF
+        ↓
+Water Pump OFF
